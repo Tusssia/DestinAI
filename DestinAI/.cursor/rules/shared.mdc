@@ -1,0 +1,95 @@
+# AI Rules for destinAI
+
+DestinAI is a web application that helps users quickly discover suitable holiday destinations at the country level. Users answer a fixed set of mandatory, closed questions. The app converts the answers into a structured prompt, sends it to an external free-access LLM API, validates/parses the response (strict JSON), and displays exactly 5 recommended countries. Users can save recommendations to a Favorites list, add short notes, and delete saved items.
+
+## TECH STACK
+Spring Boot + Spring MVC + Thymeleaf
+
+## PROJECT STRUCTURE
+
+When introducing changes to the project, always follow the directory structure below:
+DestinAI/
+├─ pom.xml
+├─ .github/workflows/
+│  └─ ci.yml
+├─ docker/                       # optional local dev
+│  └─ docker-compose.yml
+└─ src/
+   ├─ main/
+   │  ├─ java/com/yourorg/destinai/
+   │  │  ├─ application/         # bootstrapping + configuration
+   │  │  │  ├─ config/           # security, mvc, thymeleaf, mail, db
+   │  │  │  └─ bootstrap/        # startup checks / seed (optional)
+   │  │  ├─ common/              # cross-cutting stuff
+   │  │  │  ├─ errors/           # exception types + global handler
+   │  │  │  ├─ security/         # current-user utilities
+   │  │  │  ├─ util/             # small helpers
+   │  │  │  └─ validation/       # shared validators
+   │  │  ├─ modules/             # feature packages (domain-first)
+   │  │  │  ├─ auth/             # passwordless OTP login + sessions
+   │  │  │  │  ├─ web/           # thymeleaf controllers + form models
+   │  │  │  │  ├─ service/       # OTP issuing/verification + mail sending
+   │  │  │  │  └─ persistence/   # JPA entities + repositories (otp tokens)
+   │  │  │  ├─ users/            # user identity (email)
+   │  │  │  │  ├─ service/
+   │  │  │  │  └─ persistence/
+   │  │  │  ├─ questionnaire/    # collect inputs + render results
+   │  │  │  │  ├─ web/
+   │  │  │  │  └─ service/
+   │  │  │  ├─ recommendations/  # LLM call + mapping to your view model
+   │  │  │  │  ├─ service/
+   │  │  │  │  └─ integration/   # HTTP client + DTOs for LLM
+   │  │  │  └─ favorites/        # CRUD for favorites
+   │  │  │     ├─ web/
+   │  │  │     ├─ service/
+   │  │  │     └─ persistence/
+   │  │  └─ api/                 # optional: REST endpoints (/api/*) later
+   │  │     └─ ...               # keep separate from thymeleaf controllers
+   │  └─ resources/
+   │     ├─ application.yml
+   │     ├─ db/migration/        # Flyway SQL migrations
+   │     ├─ templates/           # Thymeleaf pages (grouped by module)
+   │     │  ├─ layout/
+   │     │  ├─ auth/
+   │     │  ├─ questionnaire/
+   │     │  ├─ recommendations/
+   │     │  └─ favorites/
+   │     └─ static/              # css/js/images
+   └─ test/
+      ├─ java/com/yourorg/destinai/
+      │  ├─ integration/         # Testcontainers + full-stack tests
+      │  └─ unit/                # fast unit tests for services/util
+      └─ resources/
+         └─ application-test.yml
+
+where layers are:
+├─ web/
+    presentation layer: Thymeleaf controllers, form objects, view models. Handles validation + redirects +         mapping to/from the service layer. No DB access here
+├─ service/
+    business layer: Core logic, transactions, “rules”. Calls persistence + integrations. This is where you enforce:“favorites max 50”, “only owner can edit”, “OTP expires, single-use”, “dedupe favorites”.
+├─ persistence/ 
+    data access layer / DAO: JPA entities + Spring Data repositories, DB-only concerns (queries, indexes, constraints)
+├─ integration/ 
+    external systems: Email delivery client abstraction (even if it uses Spring’s JavaMailSender), LLM HTTP client + DTO mapping. Keep this separate so it’s easy to stub in tests
+├─ application/config/
+    wiring: Security config (passwordless + session cookie), MVC config (formatters, interceptors, etc.). Mail config (if any), DB/Flyway config (if any).
+
+
+## CODING_PRACTICES
+
+### Guidelines for ARCHITECTURE
+
+#### CLEAN_ARCHITECTURE
+
+- Separate concerns by module and layer (web/, service/, persistence/, integration/).
+- Dependency direction is strictly enforced: web → service → (persistence, integration). No reverse dependencies.
+- service/ contains business rules and application use-cases. It must not depend on controllers, HTTP/session objects, or Spring MVC types.
+- External systems and databases are accessed through interfaces (ports) defined in or near the service layer; implementations live in persistence/ and integration/ (adapters).
+- Do not leak framework or data models across boundaries: service/ must not expose JPA entities to web/. web/ must not pass HTTP-specific objects into service/.
+- Use explicit mappers to convert between: form/view models ↔ service commands/results, service models ↔ persistence/integration DTOs
+
+####  GENERAL RULES
+- Domain and service code should be testable without Spring context.
+- Business exceptions are defined in common/errors and mapped to HTTP responses via a global handler.
+- Avoid leaking framework annotations and utilities outside their intended layer.
+
