@@ -20,7 +20,7 @@ DestinAI is a web application that helps users quickly discover suitable holiday
 
 ### 1.5 Core UX Flow Summary
 - New destination flow: Login → New Destination → Questionnaire → Loading → Results (5) → Save to Favorites
-- Returning user flow: Login → Favorites → Edit note / Delete favorite → Optional New Destination
+- Returning user flow: Login → Favorites → Delete favorite / Add or update note → Optional New Destination
 
 ## 2. User Problem
 ### 2.1 Problem Statement
@@ -193,10 +193,10 @@ FR-018 Favorites display
   - Entry point to “New destination”
 
 ### 3.6 Account, Authentication, Authorization
-FR-019 Passwordless authentication via email magic link
-- Users must be able to request a login link by entering an email.
-- Users must be able to log in by clicking the magic link.
-- Sessions must be established securely after link verification.
+FR-019 Passwordless email-based authentication using one-time codes or links
+- Users must be able to request a one-time sign-in method by entering an email.
+- Users must be able to sign in using the one-time code or link.
+- Sessions must be established securely after verification.
 - Unauthorized users must not be able to access Favorites or create/save favorites.
 
 ### 3.7 Data Storage and Privacy
@@ -210,7 +210,7 @@ FR-020 Data model (minimum)
 - Do not store:
   - Questionnaire answers
   - Past searches
-  - User profile fields beyond email required for auth
+  - User profile fields beyond email required for authentication
 
 FR-021 Favorites constraints
 - Dedupe rule: one saved entry per country per user.
@@ -241,9 +241,9 @@ FR-024 Performance and timeouts
 
 FR-025 Security baseline
 - Use secure session handling (httpOnly cookies or equivalent).
-- Magic links must be single-use and time-limited.
+- One-time codes/links must be single-use and time-limited.
 - Protect endpoints with authorization checks (Favorites CRUD must require a valid session).
-- Rate-limit login link requests to reduce abuse.
+- Rate-limit sign-in requests to reduce abuse.
 
 FR-026 Accessibility and responsiveness
 - Responsive design supporting mobile browsers (web-only).
@@ -255,7 +255,7 @@ FR-026 Accessibility and responsiveness
 2. Fixed closed-question questionnaire, all mandatory
 3. External LLM integration using strict JSON output
 4. Normalization pipeline: validate → enforce count=5 → dedupe → diversification → re-validate → render
-5. Passwordless email magic link authentication
+5. Passwordless email-based authentication using one-time codes or links
 6. Favorites CRUD with notes and cap
 
 ### 4.2 Out of Scope (MVP)
@@ -291,46 +291,46 @@ FR-026 Accessibility and responsiveness
 
 5. Data/privacy operational requirements
 - Whether account/data deletion is required in MVP.
-- Magic link deliverability requirements, email service selection, and bounce handling.
+- One-time sign-in deliverability requirements, email service selection, and bounce handling.
 - Recommendation: include a minimal “delete account” request flow post-MVP unless required by compliance or beta policy.
 
 ## 5. User Stories
 ### Authentication and Access
 - ID: US-001
-  Title: Request a magic login link
-  Description: As a user, I want to enter my email and receive a magic link so I can sign in without a password.
+  Title: Request a one-time sign-in method via email
+  Description: As a user, I want to enter my email and receive a one-time code or link so I can sign in without a password.
   Acceptance Criteria:
   - Given I am on the Login screen, when I enter a valid email and submit, then the app shows a confirmation state (sent).
-  - The system sends a magic link email to the provided address.
+  - The system sends a one-time code or link to the provided email address.
   - The request is rate-limited to prevent abuse (e.g., repeated rapid requests are blocked with a friendly message).
 
 - ID: US-002
-  Title: Sign in using a valid magic link
-  Description: As a user, I want to click a magic link and be authenticated so I can access the app.
+  Title: Sign in using a valid one-time code or link
+  Description: As a user, I want to use the one-time code or link and be authenticated so I can access the app.
   Acceptance Criteria:
-  - Given I open a valid, unexpired, unused magic link, when it is verified, then I am logged in and redirected to the app entry point (Favorites or New Destination).
+  - Given I open a valid, unexpired, unused one-time code or link, when it is verified, then I am signed in and redirected to the app entry point (Favorites or New Destination).
   - A secure session is created.
-  - The magic link cannot be reused after successful login.
+  - One-time codes or links cannot be reused after successful sign-in.
 
 - ID: US-003
-  Title: Handle expired or invalid magic link
-  Description: As a user, I want clear guidance if my magic link is invalid or expired so I can request a new one.
+  Title: Handle expired or invalid one-time code or link
+  Description: As a user, I want clear guidance if my one-time code or link is invalid or expired so I can request a new one.
   Acceptance Criteria:
-  - Given I open an expired/invalid/used link, then I see an error message and a call-to-action to request a new link.
-  - No session is created for invalid/expired links.
+  - Given I use an expired/invalid/used code or link, then I see an error message and a call-to-action to request a new one.
+  - No session is created for invalid/expired attempts.
 
 - ID: US-004
   Title: Sign out
   Description: As a user, I want to sign out so that my session ends on shared devices.
   Acceptance Criteria:
-  - Given I am logged in, when I click Sign out, then my session is invalidated and I return to the Login screen.
-  - After sign out, I cannot access Favorites without logging in again.
+  - Given I am signed in, when I click Sign out, then my session is invalidated and I return to the Login screen.
+  - After sign out, I cannot access Favorites without signing in again.
 
 - ID: US-005
   Title: Prevent unauthorized access to Favorites and saved data
-  Description: As the product, I must ensure only authenticated users can access their favorites.
+  Description: As the product, I must ensure only signed-in users can access their favorites.
   Acceptance Criteria:
-  - Given I am not authenticated, when I attempt to access Favorites endpoints or pages, then I am redirected to Login.
+  - Given I am not signed in, when I attempt to access Favorites pages or endpoints, then I am redirected to Login.
   - API endpoints for Favorites CRUD reject requests without a valid session.
 
 ### Questionnaire and Recommendation Generation
@@ -338,7 +338,7 @@ FR-026 Accessibility and responsiveness
   Title: Start a new destination search
   Description: As a user, I want to begin a new questionnaire so I can get recommendations.
   Acceptance Criteria:
-  - Given I am logged in, when I click New destination, then I see the questionnaire screen.
+  - Given I am signed in, when I click New destination, then I see the questionnaire screen.
   - The questionnaire starts in an empty state with all required inputs.
 
 - ID: US-007
@@ -490,7 +490,7 @@ FR-026 Accessibility and responsiveness
   Title: View Favorites list
   Description: As a returning user, I want to see my saved countries so I can decide later.
   Acceptance Criteria:
-  - Given I am logged in, when I open Favorites, then I see all saved countries (up to 50) in a list.
+  - Given I am signed in, when I open Favorites, then I see all saved countries (up to 50) in a list.
   - Each entry shows country and saved date (and note, if present).
 
 - ID: US-027
@@ -499,7 +499,7 @@ FR-026 Accessibility and responsiveness
   Acceptance Criteria:
   - Given a favorite entry, when I add/edit a note and save, then the note is stored and displayed.
   - Notes are limited to 100 characters; extra characters are prevented or rejected with a clear message.
-  - Notes persist after refresh and re-login.
+  - Notes persist after refresh and after I sign in again.
 
 - ID: US-028
   Title: Delete a favorite
@@ -537,7 +537,7 @@ FR-026 Accessibility and responsiveness
   Description: As the product, I want to ensure Favorites data cannot be accessed or modified by other users.
   Acceptance Criteria:
   - Favorites CRUD requires authentication.
-  - Requests are scoped to the authenticated user; attempts to access another user’s data fail.
+  - Requests are scoped to the signed-in user; attempts to access another user’s data fail.
   - Authorization checks are enforced server-side.
 
 ## 6. Success Metrics
