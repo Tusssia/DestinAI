@@ -57,7 +57,7 @@ jobs:
           name: jacoco-unit
           path: target/site/jacoco-unit
 
-  integration-test:
+  e2e-test:
     needs: lint
     runs-on: ubuntu-latest
     steps:
@@ -69,16 +69,16 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: maven
-      - name: Run integration tests
+      - name: Run e2e tests
         run: mvn -B -ntp -DskipTests=true -DskipITs=false verify
-      - name: Upload integration test coverage
+      - name: Upload e2e test coverage
         uses: actions/upload-artifact@v4
         with:
-          name: jacoco-it
-          path: target/site/jacoco-it
+          name: jacoco-e2e
+          path: target/site/jacoco-e2e
 
   status-comment:
-    needs: [lint, unit-test, integration-test]
+    needs: [lint, unit-test, e2e-test]
     runs-on: ubuntu-latest
     if: ${{ success() && github.event.pull_request }}
     steps:
@@ -88,11 +88,11 @@ jobs:
           script: |
             const prNumber = context.payload.pull_request.number;
             const body = [
-              '✅ Lint, unit, and integration tests passed.',
+              '✅ Lint, unit, and e2e tests passed.',
               '',
               'Coverage artifacts uploaded:',
               '- jacoco-unit',
-              '- jacoco-it'
+              '- jacoco-e2e'
             ].join('\n');
             await github.rest.issues.createComment({
               owner: context.repo.owner,
