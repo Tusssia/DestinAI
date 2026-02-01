@@ -16,7 +16,7 @@ DestinAI/
 │  └─ docker-compose.yml
 └─ src/
    ├─ main/
-   │  ├─ java/com/yourorg/destinai/
+   │  ├─ java/com/destinai/
    │  │  ├─ application/         # bootstrapping + configuration
    │  │  │  ├─ config/           # security, mvc, thymeleaf, mail, db
    │  │  │  └─ bootstrap/        # startup checks / seed (optional)

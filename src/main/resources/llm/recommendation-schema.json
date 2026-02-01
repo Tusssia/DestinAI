@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["schema_version", "destinations"],
+  "properties": {
+    "schema_version": {
+      "type": "string"
+    },
+    "destinations": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "required": [
+          "country",
+          "region",
+          "estimated_daily_budget_eur_range",
+          "best_months",
+          "weather_summary",
+          "accommodation_fit",
+          "travel_style_fit",
+          "top_activities",
+          "pros",
+          "cons",
+          "why_match"
+        ],
+        "properties": {
+          "country": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "estimated_daily_budget_eur_range": {
+            "type": "string"
+          },
+          "best_months": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "weather_summary": {
+            "type": "string"
+          },
+          "accommodation_fit": {
+            "type": "string"
+          },
+          "travel_style_fit": {
+            "type": "string"
+          },
+          "top_activities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "pros": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "cons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "why_match": {
+            "type": "string"
+          },
+          "relaxed_constraints": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
+
