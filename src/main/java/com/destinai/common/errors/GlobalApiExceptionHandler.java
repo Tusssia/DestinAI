@@ -53,6 +53,30 @@ public class GlobalApiExceptionHandler {
 				.body(new ApiErrorDto("validation_error", ex.getMessage(), null));
 	}
 
+	@ExceptionHandler(LlmValidationException.class)
+	public ResponseEntity<ApiErrorDto> handleLlmValidation(LlmValidationException ex) {
+		log.warn("LLM validation failed after retries. reason={}", ex.getReasonCode(), ex);
+		return ResponseEntity.status(422) // UNPROCESSABLE_ENTITY
+				.body(new ApiErrorDto("llm_validation_failed", 
+					"Service is temporarily unavailable. Please try again later.", null));
+	}
+
+	@ExceptionHandler(LlmServiceException.class)
+	public ResponseEntity<ApiErrorDto> handleLlmService(LlmServiceException ex) {
+		log.error("LLM service error. reason={}", ex.getReasonCode(), ex);
+		return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+				.body(new ApiErrorDto("llm_service_error", 
+					"Service is temporarily unavailable. Please try again later.", null));
+	}
+
+	@ExceptionHandler(LlmTimeoutException.class)
+	public ResponseEntity<ApiErrorDto> handleLlmTimeout(LlmTimeoutException ex) {
+		log.warn("LLM request timed out", ex);
+		return ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT)
+				.body(new ApiErrorDto("llm_timeout", 
+					"Service is temporarily unavailable. Please try again later.", null));
+	}
+
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<ApiErrorDto> handleUnexpected(Exception ex) {
 		log.error("Unhandled API exception", ex);

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="_csrf" th:content="${_csrf.token}" />
+		<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+		<title>DestinAI - Results</title>
+		<script src="/js/results.js" defer></script>
+	</head>
+	<body>
+		<main class="results-page">
+			<header class="results-header">
+				<h1>Your recommendations</h1>
+				<p>Here are five destinations that match your preferences.</p>
+				<nav>
+					<a href="/favorites">Favorites</a>
+					<a href="/questionnaire">New destination</a>
+				</nav>
+			</header>
+
+			<section class="results-content">
+				<div id="results-loading" hidden>Loading recommendations...</div>
+				<div id="results-error" hidden>
+					<p id="results-error-message">Something went wrong.</p>
+					<button id="results-retry" type="button">Retry</button>
+				</div>
+				<div id="results-list"></div>
+			</section>
+		</main>
+	</body>
+</html>
+

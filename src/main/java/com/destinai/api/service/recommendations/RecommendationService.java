@@ -4,6 +4,9 @@ import com.destinai.api.dto.recommendations.DestinationDto;
 import com.destinai.api.dto.recommendations.RecommendationResponseDto;
 import com.destinai.api.service.model.Destination;
 import com.destinai.api.service.model.RecommendationResult;
+import com.destinai.common.errors.LlmServiceException;
+import com.destinai.common.errors.LlmTimeoutException;
+import com.destinai.common.errors.LlmValidationException;
 import com.destinai.modules.recommendations.integration.LlmClient;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -18,7 +21,9 @@ import java.util.stream.IntStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 
 @Service
 public class RecommendationService {
@@ -39,6 +44,12 @@ public class RecommendationService {
 			"latin america/caribbean"
 	);
 
+	// Common city/region names that should be rejected (not exhaustive, but catches common cases)
+	private static final Set<String> NON_COUNTRY_INDICATORS = Set.of(
+			"city", "island", "islands", "beach", "coast", "region", "province", "state", "valley",
+			"mountain", "mountains", "peninsula", "archipelago", "bay", "gulf", "sea", "ocean"
+	);
+
 	private final LlmClient llmClient;
 	private final RecommendationPromptBuilder promptBuilder;
 	private final ObjectMapper objectMapper;
@@ -52,9 +63,9 @@ public class RecommendationService {
 
 	public RecommendationResult generate(RecommendationRequest request) {
 		String prompt = promptBuilder.buildPrompt(request);
-		String response = callWithRetry(prompt);
+		String response = callWithRetry(prompt, request);
 
-		ParsedResult parsed = parseResponse(response);
+		ParsedResult parsed = parseResponse(response, request);
 		if (parsed.result() != null) {
 			return parsed.result();
 		}
@@ -62,31 +73,64 @@ public class RecommendationService {
 		log.warn("LLM validation failed; attempting repair. reason={}", parsed.failure().reason());
 		String details = buildRepairDetails(parsed.failure(), parsed.dto(), parsed.rawResponse());
 		String repairPrompt = promptBuilder.buildRepairPrompt(parsed.failure().reason(), details);
-		String repaired = callWithRetry(repairPrompt);
-		ParsedResult repairedResult = parseResponse(repaired);
+		String repaired = callWithRetry(repairPrompt, request);
+		ParsedResult repairedResult = parseResponse(repaired, request);
 		if (repairedResult.result() != null) {
 			return repairedResult.result();
 		}
 
 		log.warn("LLM repair failed. reason={}", repairedResult.failure().reason());
-		throw new IllegalStateException("LLM response invalid after repair.");
+		throw new LlmValidationException(repairedResult.failure().reason(),
+				"LLM response invalid after repair: " + repairedResult.failure().details());
 	}
 
-	private String callWithRetry(String prompt) {
+	private String callWithRetry(String prompt, RecommendationRequest request) {
 		try {
 			return llmClient.complete(prompt);
+		} catch (ResourceAccessException ex) {
+			// Timeout or connection issues
+			log.warn("LLM call failed (timeout/connection), retrying once. reason=network_error");
+			try {
+				Thread.sleep(QUICK_RETRY_DELAY.toMillis());
+			} catch (InterruptedException interruptedException) {
+				Thread.currentThread().interrupt();
+				throw new LlmTimeoutException("LLM request interrupted", interruptedException);
+			}
+			try {
+				return llmClient.complete(prompt);
+			} catch (ResourceAccessException retryEx) {
+				log.error("LLM retry failed. reason=timeout");
+				throw new LlmTimeoutException("LLM request timed out after retry", retryEx);
+			} catch (RestClientResponseException retryEx) {
+				log.error("LLM retry failed with HTTP error. status={}, reason=provider_error", retryEx.getStatusCode());
+				throw new LlmServiceException("provider_error", "LLM provider returned error: " + retryEx.getStatusCode(), retryEx);
+			} catch (RestClientException retryEx) {
+				log.error("LLM retry failed. reason=network_error");
+				throw new LlmServiceException("network_error", "LLM service unavailable", retryEx);
+			}
+		} catch (RestClientResponseException ex) {
+			// HTTP error from provider
+			log.error("LLM provider error. status={}, reason=provider_error", ex.getStatusCode());
+			throw new LlmServiceException("provider_error", "LLM provider returned error: " + ex.getStatusCode(), ex);
 		} catch (RestClientException ex) {
+			// Other network errors
 			log.warn("LLM call failed, retrying once. reason=network_error");
 			try {
 				Thread.sleep(QUICK_RETRY_DELAY.toMillis());
 			} catch (InterruptedException interruptedException) {
 				Thread.currentThread().interrupt();
+				throw new LlmServiceException("network_error", "LLM request interrupted", interruptedException);
 			}
-			return llmClient.complete(prompt);
+			try {
+				return llmClient.complete(prompt);
+			} catch (RestClientException retryEx) {
+				log.error("LLM retry failed. reason=network_error");
+				throw new LlmServiceException("network_error", "LLM service unavailable after retry", retryEx);
+			}
 		}
 	}
 
-	private ParsedResult parseResponse(String response) {
+	private ParsedResult parseResponse(String response, RecommendationRequest request) {
 		try {
 			JsonNode payload = objectMapper.readTree(response);
 			ValidationFailure schemaFailure = validateSchema(payload);
@@ -94,7 +138,7 @@ public class RecommendationService {
 				return new ParsedResult(null, schemaFailure, null, response);
 			}
 			RecommendationResponseDto dto = objectMapper.treeToValue(payload, RecommendationResponseDto.class);
-			ValidationFailure failure = validateBusinessRules(dto);
+			ValidationFailure failure = validateBusinessRules(dto, request);
 			if (failure != null) {
 				return new ParsedResult(null, failure, dto, response);
 			}
@@ -147,19 +191,43 @@ public class RecommendationService {
 		return null;
 	}
 
-	private ValidationFailure validateBusinessRules(RecommendationResponseDto dto) {
+	private ValidationFailure validateBusinessRules(RecommendationResponseDto dto, RecommendationRequest request) {
 		if (dto.destinations().size() != REQUIRED_DESTINATIONS) {
 			return new ValidationFailure("destinations_count", "Expected 5 destinations, got " + dto.destinations().size());
 		}
 		Map<String, Integer> regionCounts = new HashMap<>();
 		Set<String> duplicateCountries = new HashSet<>();
 		Set<String> countries = new HashSet<>();
+		Set<String> nonCountryDestinations = new HashSet<>();
+		Set<String> activityMismatchDestinations = new HashSet<>();
+		
 		for (DestinationDto destination : dto.destinations()) {
 			String normalized = destination.country().trim().toLowerCase();
 			if (!countries.add(normalized)) {
 				duplicateCountries.add(destination.country());
 				continue;
 			}
+			
+			// FR-007: Country-level granularity enforcement
+			if (!isValidCountry(destination.country())) {
+				nonCountryDestinations.add(destination.country());
+			}
+			
+			// FR-014: Activity matching rule - each destination must cover at least 2 selected activities
+			if (destination.topActivities() != null && !destination.topActivities().isEmpty()) {
+				long matchingActivities = destination.topActivities().stream()
+						.map(String::toLowerCase)
+						.filter(activity -> request.activities().stream()
+								.map(String::toLowerCase)
+								.anyMatch(reqActivity -> reqActivity.equals(activity)))
+						.count();
+				if (matchingActivities < 2) {
+					activityMismatchDestinations.add(destination.country());
+				}
+			} else {
+				activityMismatchDestinations.add(destination.country());
+			}
+			
 			String normalizedRegion = destination.region().trim().toLowerCase();
 			if (!ALLOWED_REGIONS.contains(normalizedRegion)) {
 				return new ValidationFailure("region_invalid", "Invalid region: " + destination.region());
@@ -196,7 +264,37 @@ public class RecommendationService {
 		if (!duplicateCountries.isEmpty()) {
 			return new ValidationFailure("duplicate_countries", "Duplicates: " + String.join(", ", duplicateCountries));
 		}
+		if (!nonCountryDestinations.isEmpty()) {
+			return new ValidationFailure("non_country", "Non-country destinations detected: " + String.join(", ", nonCountryDestinations));
+		}
+		if (!activityMismatchDestinations.isEmpty()) {
+			return new ValidationFailure("activity_coverage", "Destinations must cover at least 2 selected activities: " + String.join(", ", activityMismatchDestinations));
+		}
 		return null;
+	}
+
+	/**
+	 * FR-007: Validates that the destination is a country, not a city/region.
+	 * Uses heuristic: checks if name contains common non-country indicators.
+	 */
+	private boolean isValidCountry(String countryName) {
+		if (countryName == null || countryName.isBlank()) {
+			return false;
+		}
+		String normalized = countryName.trim().toLowerCase();
+		// Check if it contains common city/region indicators
+		for (String indicator : NON_COUNTRY_INDICATORS) {
+			if (normalized.contains(indicator)) {
+				return false;
+			}
+		}
+		// Additional heuristic: very short names (< 3 chars) are likely cities
+		if (normalized.length() < 3) {
+			return false;
+		}
+		// Common country names are typically 4+ characters (with exceptions)
+		// This is a simple heuristic - in production, use a comprehensive country list
+		return true;
 	}
 
 	private boolean isInvalidText(String value) {
@@ -286,6 +384,12 @@ public class RecommendationService {
 			}
 			if ("destinations_count".equals(failure.reason())) {
 				details.append(" Return exactly 5 destinations, add/remove as needed.");
+			}
+			if ("non_country".equals(failure.reason())) {
+				details.append(" Replace non-country destinations (cities/regions) with actual countries.");
+			}
+			if ("activity_coverage".equals(failure.reason())) {
+				details.append(" Ensure each destination covers at least 2 of the user's selected activities.");
 			}
 			details.append(" Previous response JSON: ").append(rawResponse);
 		} else if (rawResponse != null && !rawResponse.isBlank()) {

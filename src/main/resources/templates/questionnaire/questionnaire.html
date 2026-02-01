@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="_csrf" th:content="${_csrf.token}" />
+		<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+		<title>DestinAI - Questionnaire</title>
+		<script src="/js/questionnaire.js" defer></script>
+	</head>
+	<body>
+		<main class="questionnaire-page">
+			<header class="questionnaire-header">
+				<h1>Tell us about your trip</h1>
+				<p>Answer all questions to generate your recommendations.</p>
+			</header>
+
+			<section class="questionnaire-card">
+				<form id="questionnaire-form" novalidate>
+					<fieldset>
+						<legend>Who are you traveling with?</legend>
+						<label>
+							<input type="radio" name="who" value="solo" />
+							Solo
+						</label>
+						<label>
+							<input type="radio" name="who" value="couple" />
+							Couple
+						</label>
+					</fieldset>
+
+					<fieldset>
+						<legend>What kind of trip is this?</legend>
+						<label>
+							<input type="radio" name="travel_type" value="backpacking" />
+							Backpacking
+						</label>
+						<label>
+							<input type="radio" name="travel_type" value="staying_in_one_place" />
+							Staying in one place
+						</label>
+					</fieldset>
+
+					<fieldset>
+						<legend>Preferred accommodation</legend>
+						<label>
+							<input type="radio" name="accommodation" value="camping" />
+							Camping
+						</label>
+						<label>
+							<input type="radio" name="accommodation" value="hostels" />
+							Hostels
+						</label>
+						<label>
+							<input type="radio" name="accommodation" value="hotels" />
+							Hotels
+						</label>
+					</fieldset>
+
+					<fieldset>
+						<legend>Favorite activities (choose at least one)</legend>
+						<label>
+							<input type="checkbox" name="activities" value="hiking" />
+							Hiking
+						</label>
+						<label>
+							<input type="checkbox" name="activities" value="diving" />
+							Diving
+						</label>
+						<label>
+							<input type="checkbox" name="activities" value="tennis" />
+							Tennis
+						</label>
+						<label>
+							<input type="checkbox" name="activities" value="canoeing" />
+							Canoeing
+						</label>
+						<label>
+							<input type="checkbox" name="activities" value="climbing" />
+							Climbing
+						</label>
+						<label>
+							<input type="checkbox" name="activities" value="surfing" />
+							Surfing
+						</label>
+						<label>
+							<input type="checkbox" name="activities" value="local culture" />
+							Local culture
+						</label>
+						<label>
+							<input type="checkbox" name="activities" value="local cuisine" />
+							Local cuisine
+						</label>
+					</fieldset>
+
+					<fieldset>
+						<legend>Budget</legend>
+						<label>
+							<input type="radio" name="budget" value="very_low" />
+							Very low
+						</label>
+						<label>
+							<input type="radio" name="budget" value="medium" />
+							Medium
+						</label>
+						<label>
+							<input type="radio" name="budget" value="luxurious" />
+							Luxurious
+						</label>
+					</fieldset>
+
+					<fieldset>
+						<legend>Weather preference</legend>
+						<label>
+							<input type="radio" name="weather" value="sunny_dry" />
+							Sunny &amp; dry
+						</label>
+						<label>
+							<input type="radio" name="weather" value="sunny_humid" />
+							Sunny &amp; humid
+						</label>
+						<label>
+							<input type="radio" name="weather" value="cool" />
+							Cool
+						</label>
+						<label>
+							<input type="radio" name="weather" value="rainy" />
+							Rainy
+						</label>
+					</fieldset>
+
+					<fieldset>
+						<legend>Preferred season</legend>
+						<label>
+							<input type="radio" name="season" value="winter" />
+							Winter
+						</label>
+						<label>
+							<input type="radio" name="season" value="spring" />
+							Spring
+						</label>
+						<label>
+							<input type="radio" name="season" value="summer" />
+							Summer
+						</label>
+						<label>
+							<input type="radio" name="season" value="autumn" />
+							Autumn
+						</label>
+					</fieldset>
+
+					<button id="questionnaire-submit" type="submit" disabled>Get recommendations</button>
+				</form>
+
+				<p id="questionnaire-status" role="status" aria-live="polite"></p>
+			</section>
+		</main>
+	</body>
+</html>
+

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="_csrf" th:content="${_csrf.token}" />
+		<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+		<title>DestinAI - Sign in</title>
+		<script src="/js/login.js" defer></script>
+	</head>
+	<body>
+		<main class="login-page">
+			<section class="login-card">
+				<header class="login-header">
+					<h1>Sign in to DestinAI</h1>
+					<p>Get a one-time sign-in code sent to your email.</p>
+				</header>
+
+				<div class="login-forms" data-step="request">
+					<form id="otp-request-form" class="login-form" novalidate>
+						<h2>Request a code</h2>
+						<label for="request-email">Email address</label>
+						<input
+							id="request-email"
+							name="email"
+							type="email"
+							autocomplete="email"
+							required
+						/>
+						<button type="submit">Send code</button>
+					</form>
+
+					<form id="otp-verify-form" class="login-form" novalidate hidden>
+						<h2>Verify your code</h2>
+						<label for="verify-email">Email address</label>
+						<input
+							id="verify-email"
+							name="email"
+							type="email"
+							autocomplete="email"
+							required
+						/>
+						<label for="verify-code">One-time code</label>
+						<input
+							id="verify-code"
+							name="code"
+							type="text"
+							autocomplete="one-time-code"
+						/>
+						<input id="verify-token" name="token" type="text" hidden />
+						<button type="submit">Verify</button>
+					</form>
+				</div>
+
+				<p id="login-status" class="login-status" role="status" aria-live="polite"></p>
+
+				<nav class="login-footer">
+					<a href="#" id="retry-request-link">Request a new code</a>
+				</nav>
+			</section>
+		</main>
+	</body>
+</html>
+

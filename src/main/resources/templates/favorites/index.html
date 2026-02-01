@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="_csrf" th:content="${_csrf.token}" />
+		<meta name="_csrf_header" th:content="${_csrf.headerName}" />
+		<title>DestinAI - Favorites</title>
+		<script src="/js/favorites.js" defer></script>
+	</head>
+	<body>
+		<main class="favorites-page">
+			<header class="favorites-header">
+				<h1>Favorites</h1>
+				<nav>
+					<a href="/questionnaire">New destination</a>
+				</nav>
+			</header>
+
+			<section class="favorites-toolbar">
+				<form id="favorites-search-form">
+					<label for="favorites-search">Search by country</label>
+					<input id="favorites-search" name="country" type="search" />
+					<button type="submit">Search</button>
+				</form>
+				<label for="favorites-sort">Sort</label>
+				<select id="favorites-sort" name="sort">
+					<option value="created_at_desc">Newest first</option>
+					<option value="created_at_asc">Oldest first</option>
+				</select>
+			</section>
+
+			<section>
+				<div id="favorites-status" role="status" aria-live="polite"></div>
+				<div id="favorites-empty" hidden>
+					<p>You have no saved destinations yet.</p>
+					<a href="/questionnaire">Find a new destination</a>
+				</div>
+				<div id="favorites-list"></div>
+			</section>
+
+			<nav class="favorites-pagination" aria-label="Favorites pagination">
+				<button id="favorites-prev" type="button">Previous</button>
+				<span id="favorites-page-info"></span>
+				<button id="favorites-next" type="button">Next</button>
+			</nav>
+		</main>
+	</body>
+</html>
+
