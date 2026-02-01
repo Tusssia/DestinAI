@@ -138,12 +138,6 @@ You can use these instead of a globally installed Maven.
 # Clean and compile
 ./mvnw clean compile
 
-# Run tests (skips tests that require running Docker)
-./mvnw test
-
-# Run all tests (including ones that require running Docker, make sure docker is running)
-./mvnw  test -Dtest=DestinaiApplicationTests -Dtestcontainers.enabled=true
-
 # Package application (creates JAR)
 ./mvnw package
 
@@ -180,8 +174,11 @@ You can use these instead of a globally installed Maven.
 ### Testing Commands
 
 ```bash
-# Run all tests
+# Run all tests (skips tests that require running Docker)
 ./mvnw test
+
+# Run all tests (including ones that require running Docker, make sure docker is running)
+./mvnw  test -Dtest=DestinaiApplicationTests -Dtestcontainers.enabled=true
 
 # Run specific test class
 ./mvnw test -Dtest=DestinaiApplicationTests
@@ -249,22 +246,10 @@ You can use these instead of a globally installed Maven.
 - English language only
 - Maximum 50 favorites per user
 
-## License
-
-[License information to be added]
-
 ---
 
 ## Additional Documentation
 
 - [Product Requirements Document (PRD)](.ai/prd.md)
 - [Tech Stack Analysis](.ai/tech-stack.md)
-
-## Contributing
-
-[Contributing guidelines to be added]
-
-## Support
-
-[Support information to be added]
 

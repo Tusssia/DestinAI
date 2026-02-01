@@ -161,6 +161,7 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
 					<argLine>${surefireArgLine}</argLine>
+					<skipTests>${skipUnitTests}</skipTests>
 					<excludes>
 						<exclude>**/*E2ETest.java</exclude>
 						<exclude>**/*E2ETests.java</exclude>

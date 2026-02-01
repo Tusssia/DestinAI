@@ -70,7 +70,7 @@ jobs:
           java-version: '21'
           cache: maven
       - name: Run e2e tests
-        run: mvn -B -ntp -DskipTests=true -DskipITs=false -Dtestcontainers.enabled=true verify
+        run: mvn -B -ntp -DskipUnitTests=true -DskipITs=false -Dtestcontainers.enabled=true verify
       - name: Upload e2e test coverage
         uses: actions/upload-artifact@v4
         with:
