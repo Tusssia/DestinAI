@@ -110,7 +110,7 @@
 
 **Status**: ✅ **FIXED**
 - Added validation in `RecommendationService.validateBusinessRules()`
-- Checks that each destination's `topActivities` contains at least 2 of the user's selected activities
+- Checks that each destination's `topActivities` contains at least 1 of the user's selected activities
 - Returns `ValidationFailure` with reason code "activity_coverage" if validation fails
 - Repair prompt includes instruction to ensure activity coverage
 
@@ -125,7 +125,7 @@
 **Status**: ✅ **FIXED**
 - Added `isValidCountry()` heuristic method that checks for common non-country indicators
 - Validates country names don't contain words like "city", "island", "beach", "region", etc.
-- Rejects very short names (< 3 chars) that are likely cities
+- Rejects very short names (< 2 chars) that are likely cities
 - Returns `ValidationFailure` with reason code "non_country" if validation fails
 - Repair prompt includes instruction to replace non-country destinations
 
