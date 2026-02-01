@@ -123,5 +123,31 @@
 	});
 
 	updateSubmitState();
+
+	// Logout functionality
+	const logoutButton = document.getElementById("logout-button");
+	if (logoutButton) {
+		logoutButton.addEventListener("click", async () => {
+			const csrf = readCsrfHeader();
+			const headers = {
+				"Content-Type": "application/json",
+			};
+			if (csrf?.headerName && csrf.token) {
+				headers[csrf.headerName] = csrf.token;
+			}
+
+			try {
+				await fetch("/api/auth/logout", {
+					method: "POST",
+					credentials: "include",
+					headers,
+				});
+			} catch (error) {
+				// Ignore errors, still redirect
+			} finally {
+				window.location.href = "/login";
+			}
+		});
+	}
 })();
 

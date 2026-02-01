@@ -6,6 +6,10 @@
 		<meta name="_csrf" th:content="${_csrf.token}" />
 		<meta name="_csrf_header" th:content="${_csrf.headerName}" />
 		<title>DestinAI - Favorites</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+		<link rel="stylesheet" href="/css/main.css" />
 		<script src="/js/favorites.js" defer></script>
 	</head>
 	<body>
@@ -14,6 +18,7 @@
 				<h1>Favorites</h1>
 				<nav>
 					<a href="/questionnaire">New destination</a>
+					<button id="logout-button" type="button" class="nav-button">LOG OUT</button>
 				</nav>
 			</header>
 

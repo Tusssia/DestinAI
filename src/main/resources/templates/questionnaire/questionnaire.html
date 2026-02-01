@@ -6,10 +6,18 @@
 		<meta name="_csrf" th:content="${_csrf.token}" />
 		<meta name="_csrf_header" th:content="${_csrf.headerName}" />
 		<title>DestinAI - Questionnaire</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+		<link rel="stylesheet" href="/css/main.css" />
 		<script src="/js/questionnaire.js" defer></script>
 	</head>
 	<body>
 		<main class="questionnaire-page">
+			<nav class="questionnaire-nav">
+				<a href="/favorites" class="nav-link">Home</a>
+				<button id="logout-button" type="button" class="nav-button">LOG OUT</button>
+			</nav>
 			<header class="questionnaire-header">
 				<h1>Tell us about your trip</h1>
 				<p>Answer all questions to generate your recommendations.</p>
