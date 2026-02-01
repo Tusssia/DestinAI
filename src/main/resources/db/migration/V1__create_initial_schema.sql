@@ -37,7 +37,7 @@ CREATE TABLE sessions (
     expires_at TIMESTAMPTZ NOT NULL,
     last_accessed_at TIMESTAMPTZ,
     user_agent TEXT,
-    ip_address INET
+    ip_address VARCHAR(45)
 );
 
 -- Favorites table

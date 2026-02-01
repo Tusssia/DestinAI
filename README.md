@@ -138,8 +138,11 @@ You can use these instead of a globally installed Maven.
 # Clean and compile
 ./mvnw clean compile
 
-# Run tests
+# Run tests (skips tests that require running Docker)
 ./mvnw test
+
+# Run all tests (including ones that require running Docker, make sure docker is running)
+./mvnw  test -Dtest=DestinaiApplicationTests -Dtestcontainers.enabled=true
 
 # Package application (creates JAR)
 ./mvnw package

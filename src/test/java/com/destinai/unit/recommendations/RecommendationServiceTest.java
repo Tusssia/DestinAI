@@ -3,6 +3,7 @@ package com.destinai.unit.recommendations;
 import com.destinai.api.service.recommendations.RecommendationPromptBuilder;
 import com.destinai.api.service.recommendations.RecommendationRequest;
 import com.destinai.api.service.recommendations.RecommendationService;
+import com.destinai.common.errors.LlmValidationException;
 import com.destinai.modules.recommendations.integration.LlmClient;
 import com.destinai.api.command.recommendations.Accommodation;
 import com.destinai.api.command.recommendations.Budget;
@@ -43,7 +44,7 @@ class RecommendationServiceTest {
 				new ObjectMapper()
 		);
 
-		Assertions.assertThrows(IllegalStateException.class, () -> service.generate(sampleRequest()));
+		Assertions.assertThrows(LlmValidationException.class, () -> service.generate(sampleRequest()));
 	}
 
 	private RecommendationRequest sampleRequest() {
@@ -85,7 +86,7 @@ class RecommendationServiceTest {
 				      "weather_summary": "Mild with clear skies.",
 				      "accommodation_fit": "Moderate",
 				      "travel_style_fit": "Strong",
-				      "top_activities": ["culture", "cuisine"],
+				      "top_activities": ["hiking", "surfing"],
 				      "pros": ["Safe cities"],
 				      "cons": ["Higher costs"],
 				      "why_match": "Balanced activities.",
@@ -99,7 +100,7 @@ class RecommendationServiceTest {
 				      "weather_summary": "Cool and sunny.",
 				      "accommodation_fit": "Strong",
 				      "travel_style_fit": "Moderate",
-				      "top_activities": ["hiking", "canoeing"],
+				      "top_activities": ["hiking", "surfing"],
 				      "pros": ["Nature access"],
 				      "cons": ["Long distances"],
 				      "why_match": "Matches outdoor goals.",
@@ -113,7 +114,7 @@ class RecommendationServiceTest {
 				      "weather_summary": "Dry and mild.",
 				      "accommodation_fit": "Moderate",
 				      "travel_style_fit": "Strong",
-				      "top_activities": ["climbing", "culture"],
+				      "top_activities": ["hiking", "surfing"],
 				      "pros": ["Diverse regions"],
 				      "cons": ["Variable weather"],
 				      "why_match": "Varied experiences.",
@@ -127,7 +128,7 @@ class RecommendationServiceTest {
 				      "weather_summary": "Mild and clear.",
 				      "accommodation_fit": "Strong",
 				      "travel_style_fit": "Strong",
-				      "top_activities": ["hiking", "diving"],
+				      "top_activities": ["hiking", "surfing"],
 				      "pros": ["Scenic landscapes"],
 				      "cons": ["Long travel times"],
 				      "why_match": "Great for adventure.",

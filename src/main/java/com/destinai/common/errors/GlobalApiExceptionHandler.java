@@ -11,6 +11,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
  * Centralized exception handling for REST endpoints.
@@ -75,6 +76,20 @@ public class GlobalApiExceptionHandler {
 		return ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT)
 				.body(new ApiErrorDto("llm_timeout", 
 					"Service is temporarily unavailable. Please try again later.", null));
+	}
+
+	@ExceptionHandler(NoResourceFoundException.class)
+	public ResponseEntity<ApiErrorDto> handleNoResourceFound(NoResourceFoundException ex) {
+		// Ignore favicon requests - browsers automatically request this
+		String resourcePath = ex.getResourcePath();
+		if (resourcePath != null && resourcePath.equals("/favicon.ico")) {
+			// Return empty 404 response without logging
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+		}
+		// Log other missing resources at debug level (not error)
+		log.debug("Resource not found: {}", resourcePath);
+		return ResponseEntity.status(HttpStatus.NOT_FOUND)
+				.body(new ApiErrorDto("not_found", "Resource not found.", null));
 	}
 
 	@ExceptionHandler(Exception.class)
