@@ -142,8 +142,8 @@
 				<configuration>
 					<argLine>${failsafeArgLine}</argLine>
 					<includes>
-						<include>**/*E2eTest.java</include>
-						<include>**/*E2eTests.java</include>
+						<include>**/*E2ETest.java</include>
+						<include>**/*E2ETests.java</include>
 					</includes>
 					<skipITs>${skipITs}</skipITs>
 				</configuration>
@@ -162,8 +162,8 @@
 				<configuration>
 					<argLine>${surefireArgLine}</argLine>
 					<excludes>
-						<exclude>**/*E2eTest.java</exclude>
-						<exclude>**/*E2eTests.java</exclude>
+						<exclude>**/*E2ETest.java</exclude>
+						<exclude>**/*E2ETests.java</exclude>
 					</excludes>
 				</configuration>
 			</plugin>

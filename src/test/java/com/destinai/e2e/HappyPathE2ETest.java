@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.destinai.TestcontainersConfiguration;
@@ -17,17 +18,20 @@ import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
+import jakarta.servlet.http.Cookie;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.TestConstructor;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 @Import(TestcontainersConfiguration.class)
 @SpringBootTest
 @AutoConfigureMockMvc
+@TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 @EnabledIfSystemProperty(named = "testcontainers.enabled", matches = "true")
 class HappyPathE2ETest {
 
@@ -62,11 +66,13 @@ class HappyPathE2ETest {
 				.andExpect(status().isOk())
 				.andReturn();
 
-		String sessionCookie = verifyResult.getResponse().getHeader(HttpHeaders.SET_COOKIE);
-		assertThat(sessionCookie).contains(SESSION_COOKIE_NAME);
+		String setCookieHeader = verifyResult.getResponse().getHeader(HttpHeaders.SET_COOKIE);
+		assertThat(setCookieHeader).contains(SESSION_COOKIE_NAME);
+		Cookie sessionCookie = extractSessionCookie(setCookieHeader);
 
 		mockMvc.perform(post("/api/recommendations")
-						.header(HttpHeaders.COOKIE, sessionCookie)
+                        .cookie(sessionCookie)
+                        .with(csrf())
 						.contentType(MediaType.APPLICATION_JSON)
 						.content(objectMapper.writeValueAsString(new RecommendationPayload(
 								"solo",
@@ -82,17 +88,24 @@ class HappyPathE2ETest {
 				.andExpect(jsonPath("$.destinations.length()").value(5));
 
 		mockMvc.perform(post("/api/favorites")
-						.header(HttpHeaders.COOKIE, sessionCookie)
+						.cookie(sessionCookie)
+						.with(csrf())
 						.contentType(MediaType.APPLICATION_JSON)
 						.content(objectMapper.writeValueAsString(new FavoritePayload("Spain", "Great beaches"))))
 				.andExpect(status().isCreated())
 				.andExpect(jsonPath("$.country").value("Spain"));
 
 		mockMvc.perform(get("/api/favorites")
-						.header(HttpHeaders.COOKIE, sessionCookie))
+        .cookie(sessionCookie))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.total").value(1))
 				.andExpect(jsonPath("$.items[0].country").value("Spain"));
+	}
+
+    private static Cookie extractSessionCookie(String setCookieHeader) {
+		String cookiePair = setCookieHeader.split(";", 2)[0];
+		String[] parts = cookiePair.split("=", 2);
+		return new Cookie(parts[0], parts.length > 1 ? parts[1] : "");
 	}
 
 	@TestConfiguration(proxyBeanMethods = false)
@@ -107,7 +120,7 @@ class HappyPathE2ETest {
 					  "destinations": [
 					    {
 					      "country": "Spain",
-					      "region": "Southern Europe",
+					      "region": "Western Europe",
 					      "estimated_daily_budget_eur_range": "60-120",
 					      "best_months": ["May", "June"],
 					      "weather_summary": "Warm and sunny with low rainfall.",
@@ -120,7 +133,7 @@ class HappyPathE2ETest {
 					    },
 					    {
 					      "country": "Portugal",
-					      "region": "Southern Europe",
+					      "region": "Western Europe",
 					      "estimated_daily_budget_eur_range": "55-110",
 					      "best_months": ["June", "July"],
 					      "weather_summary": "Sunny coastal weather.",
@@ -152,7 +165,7 @@ class HappyPathE2ETest {
 					      "weather_summary": "Hot and dry summer days.",
 					      "accommodation_fit": "Hostels on popular islands.",
 					      "travel_style_fit": "Island hopping for backpackers.",
-					      "top_activities": ["Climbing", "Local culture"],
+					      "top_activities": ["Hiking", "Local culture"],
 					      "pros": ["Iconic islands", "Cuisine"],
 					      "cons": ["Summer heat"],
 					      "why_match": "Sunny climate and cultural activities."
