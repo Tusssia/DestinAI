@@ -29,7 +29,7 @@ import org.springframework.test.web.servlet.MvcResult;
 @SpringBootTest
 @AutoConfigureMockMvc
 @EnabledIfSystemProperty(named = "testcontainers.enabled", matches = "true")
-class HappyPathE2eTest {
+class HappyPathE2ETest {
 
 	private static final String SESSION_COOKIE_NAME = "destinai_session";
 
@@ -37,7 +37,7 @@ class HappyPathE2eTest {
 	private final ObjectMapper objectMapper;
 	private final CapturingOtpSender otpSender;
 
-	HappyPathE2eTest(MockMvc mockMvc, ObjectMapper objectMapper, CapturingOtpSender otpSender) {
+	HappyPathE2ETest(MockMvc mockMvc, ObjectMapper objectMapper, CapturingOtpSender otpSender) {
 		this.mockMvc = mockMvc;
 		this.objectMapper = objectMapper;
 		this.otpSender = otpSender;
